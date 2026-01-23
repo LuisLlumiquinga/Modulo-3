@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, FlatList, TextInput, Button, Alert } from 'react-native';
-import { useState } from 'react';
+import { StyleSheet, Text, View, FlatList, TextInput, Button, Alert, TouchableOpacity, Modal, Pressable } from 'react-native';
+import React, { useState } from 'react';
 
 let productos = [
   { nombre: "Doritos", categoría: "Snacks", precioCompra: 0.40, precioVenta: 0.45, id: 100 },
@@ -22,55 +22,59 @@ export default function App() {
   const [txtCategoria, setTxtCategoria] = useState();
   const [txtPrecioCompra, setTxtPrecioCompra] = useState();
   const [txtPrecioVenta, setTxtPrecioVenta] = useState();
-  const [numElementos, setNumElementos] = useState(productos.length)
+  const [numElementos, setNumElementos] = useState(productos.length);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [indiceEliminar, setIndiceEliminar] = useState(-1);
 
   let ItemProducto = (props) => {
     return (
-      <View style={styles.itemProducto}>
-        <View style={styles.itemIndice}>
-          <Text>{props.producto.id}</Text>
-        </View>
+      <TouchableOpacity
+        onPress={() => {
+          setTxtCodigo(props.producto.id.toString());
+          setTxtNombre(props.producto.nombre);
+          setTxtCategoria(props.producto.categoría);
+          setTxtPrecioCompra(props.producto.precioCompra.toString());
+          setTxtPrecioVenta(props.producto.precioVenta.toString());
+          esNuevo = false;
+          indiceSeleccionado = props.indice;
+        }}
+        activeOpacity={0.7}
+      >
 
-        <View style={styles.itemContenido}>
-          <Text style={styles.textoPrincipal}>
-            {props.producto.nombre}
-          </Text>
-          <Text style={styles.textoSecundario}>
-            {props.producto.categoría}
-          </Text>
-        </View>
+        <View style={styles.itemProducto}>
+          <View style={styles.itemIndice}>
+            <Text>{props.producto.id}</Text>
+          </View>
 
-        <View style={styles.precio}>
-          <Text style={styles.textoPrecio}>
-            {props.producto.precioVenta}
-          </Text>
-        </View>
+          <View style={styles.itemContenido}>
+            <Text style={styles.textoPrincipal}>
+              {props.producto.nombre}
+            </Text>
+            <Text style={styles.textoSecundario}>
+              {props.producto.categoría}
+            </Text>
+          </View>
 
-        <View style={styles.itemBotones}>
-          <Button
-            title=' E '
-            color='green'
-            onPress={() => {
-              setTxtCodigo(props.producto.id.toString());
-              setTxtNombre(props.producto.nombre);
-              setTxtCategoria(props.producto.categoría);
-              setTxtPrecioCompra(props.producto.precioCompra.toString());
-              setTxtPrecioVenta(props.producto.precioVenta.toString());
-              esNuevo = false;
-              indiceSeleccionado = props.indice;
-            }}
-          />
-          <Button
-            title=' X '
-            color='red'
-            onPress={() => {
-              indiceSeleccionado = props.indice;
-              productos.splice(indiceSeleccionado, 1);
-              setNumElementos(productos.length);
-            }}
-          />
+          <View style={styles.precio}>
+            <Text style={styles.textoPrecio}>
+              {props.producto.precioVenta}
+            </Text>
+          </View>
+
+          <View style={styles.itemBotones}>
+            <Button
+              title=' X '
+              color='red'
+              onPress={() => {
+                //indiceSeleccionado = props.indice;
+                // setNumElementos(productos.length);
+                setIndiceEliminar(props.indice);
+                setModalVisible(true);
+              }}
+            />
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   }
 
@@ -114,6 +118,12 @@ export default function App() {
     }
     limpiar();
     setNumElementos(productos.length);
+  }
+
+  let eliminarProducto = () => {
+    productos.splice(indiceEliminar, 1);
+    setNumElementos(productos.length);
+    setModalVisible(false);
   }
 
   let calcularPrecioVenta = (precioCompra) => {
@@ -160,7 +170,7 @@ export default function App() {
           style={styles.txt}
           value={txtPrecioCompra}
           placeholder='PRECIO DE COMPRA'
-          onChangeText={(texto) => {
+          onChangeText={texto => {
             const valorLimpio = texto.replace(',', '.');
             setTxtPrecioCompra(valorLimpio);
 
@@ -202,10 +212,10 @@ export default function App() {
         <FlatList
           style={styles.lista}
           data={productos}
-          renderItem={(obj) => {
+          renderItem={obj => {
             return <ItemProducto indice={obj.index} producto={obj.item} />
           }}
-          keyExtractor={(item) => {
+          keyExtractor={item => {
             return item.id
           }}
         />
@@ -215,6 +225,40 @@ export default function App() {
         <Text>Autor: Luis Llumiquinga</Text>
       </View>
 
+      <Modal
+        animationType='slide'
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>¿Está seguro que quiere eliminar?</Text>
+
+            <View style={styles.modalBotones}>
+              <Pressable
+                style={[styles.button, styles.buttonAceptar]}
+                onPress={() => {
+                  eliminarProducto();
+                }}
+              >
+                <Text style={styles.textStyle}>Aceptar</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.button, styles.buttonCancelar]}
+                onPress={() => {
+                  setModalVisible(false);
+                }}
+              >
+                <Text style={styles.textStyle}>Cancelar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -307,65 +351,55 @@ const styles = StyleSheet.create({
   textoPrecio: {
     fontSize: 20,
     fontWeight: 'bold'
-  }
-});
-
-
-/*
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.titulo}>
-        <Text style={styles.titulo}>PRODUCTOS</Text>
-      </View>
-      
-      <FlatList
-        data={productos}
-        renderItem={(obj) => {
-          return (
-            <View style={styles.itemPersona}>
-              <Text style={styles.textoPrincipal}>{obj.item.nombre} ({obj.item.categoría})</Text>
-              <Text style={styles.textoSecundario}>{obj.item.precioVenta}</Text>
-            </View>
-          );
-        }}
-        keyExtractor={(item)=>{
-          return item.id
-        }}
-      />
-
-      <StatusBar style="auto" />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column',   //eje principal vertical
-    justifyContent:'flex-start',
-    alignItems:'stretch',
-    paddingTop: 70,
-    paddingHorizontal: 10
   },
-  titulo:{
+  centeredView:{
+    flex:1,
+    justifyContent:'center',
     alignItems:'center',
-    fontSize:20,
-    fontWeight:'bold',
+    backgroundColor:'rgba(0,0,0,0.5)'
   },
-  itemPersona:{
-    backgroundColor:'#78c6ed',
-    marginBottom:10,
-    padding:10,
-    borderWidth:1,
-    borderRadius:10
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  textoPrincipal:{
-    fontSize:20
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+    minWidth: 100,
+    marginHorizontal: 5
   },
-  textoSecundario:{
-    fontSize:16,
-    fontWeight:'bold'
+  buttonAceptar: {
+    backgroundColor: 'green',
+  },
+  buttonCancelar: {
+    backgroundColor: 'red',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold'
+  },
+  modalBotones: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%'
   }
 });
-*/
